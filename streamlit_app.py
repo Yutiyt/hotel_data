@@ -216,27 +216,49 @@ with tab5:
 with tab6:
     st.subheader("Two‑macro‑group density")
 
-    GROUP_A = ["Comfortable and Clean Rooms","Quiet and Restful Environment",
-               "Modern Fitness Facilities","Fast and Reliable Wi‑Fi"]
-    GROUP_B = ["Reservation & Communication","Family-Friendly Services",
-               "Delicious Breakfast"]
-    lookup = {c.replace("Expect_",""):c for c in df.columns if c.startswith("Expect_")}
-    if "Macro_X" not in df.columns:
-        macro=[]
-        for _,row in df.iterrows():
-            n_a=row[[lookup[f] for f in GROUP_A]].sum()
-            n_b=row[[lookup[f] for f in GROUP_B]].sum()
-            tot=n_a+n_b
-            macro.append(np.nan if tot==0 else (n_a-n_b)/tot)
-        df["Macro_X"]=macro
-    vals=df["Macro_X"].dropna()
+    # ----- define the two macro‑groups ----------------------------
+    GROUP_A = ["Comfortable and Clean Rooms",
+               "Quiet and Restful Environment",
+               "Modern Fitness Facilities",
+               "Fast and Reliable Wi‑Fi"]
 
-    fig, ax = plt.subplots(figsize=(8,3))
-    sns.kdeplot(vals,fill=True,alpha=0.25,linewidth=0,clip=(-1.05,1.05),
-                color="gray",ax=ax)
-    ax.scatter(vals, np.full_like(vals,-0.02),marker="|",color="black")
-    ax.set_xlim(-1.05,1.05); ax.set_yticks([])
-    ax.set_xticks([-1,-0.5,0,0.5,1])
-    ax.set_xticklabels(["All B","‑lean B","Balanced","+lean A","All A"])
+    GROUP_B = ["Reservation & Communication",
+               "Family-Friendly Services",
+               "Delicious Breakfast"]
+
+    # ----- build lookup from the actual Expect_ columns -----------
+    lookup = {c.replace("Expect_", ""): c
+              for c in df.columns if c.startswith("Expect_")}
+
+    # If the user hasn't uploaded a file yet, bail out gracefully
+    if not lookup:
+        st.info("Upload a data file first to see this chart.")
+        st.stop()
+
+    # ----- compute Macro_X safely (skip missing features) ---------
+    if "Macro_X" not in df.columns:
+        macro = []
+        for _, row in df.iterrows():
+            n_a = row[[lookup[f] for f in GROUP_A if f in lookup]].sum()
+            n_b = row[[lookup[f] for f in GROUP_B if f in lookup]].sum()
+            tot = n_a + n_b
+            macro.append(np.nan if tot == 0 else (n_a - n_b) / tot)
+        df["Macro_X"] = macro
+
+    vals = df["Macro_X"].dropna()
+
+    # ----- density + rug plot ------------------------------------
+    fig, ax = plt.subplots(figsize=(8, 3))
+    sns.kdeplot(vals, fill=True, alpha=0.25, linewidth=0,
+                clip=(-1.05, 1.05), color="gray", ax=ax)
+    ax.scatter(vals, np.full_like(vals, -0.02),
+               marker="|", color="black")
+
+    ax.set_xlim(-1.05, 1.05);  ax.set_yticks([])
+    ax.set_xticks([-1, -0.5, 0, 0.5, 1])
+    ax.set_xticklabels(["All B", "-lean B", "Balanced", "+lean A", "All A"])
     ax.set_xlabel("←  Family & Food Convenience      |      Comfort & Connectivity  →")
+    ax.set_title("Distribution of guest expectations across the two macro‑groups")
     st.pyplot(fig)
+
+    
