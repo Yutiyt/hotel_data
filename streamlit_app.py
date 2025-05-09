@@ -86,22 +86,19 @@ tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
 )
 
 # -------------- extra summary: most‑selected expectations ---------------
+# -------------- expectation → fulfilment summary ---------------
 expect_cols = [c for c in df.columns if c.startswith("Expect_")]
 met_cols    = [f"Met_{c.split('_', 1)[1]}" for c in expect_cols]
 
-counts      = df[expect_cols].sum()
-met_counts  = df[met_cols].sum()
+counts      = df[expect_cols].sum().astype(int).values          # numpy array
+met_counts  = df[met_cols].sum().astype(int).values             # numpy array
 
-summary = (
-    pd.DataFrame({
-        "Feature"  : [c.replace("Expect_", "") for c in expect_cols],
-        "Guests"   : counts.values.astype(int),
-        "Expect %" : (counts / len(df) * 100).round(1),
-        "Met %"    : (met_counts / counts.replace(0, np.nan) * 100).round(1)
-    })
-    .fillna(0)                      # turn NaN -> 0 for Met %
-    .sort_values("Guests", ascending=False)
-)
+summary = pd.DataFrame({
+    "Feature"  : [c.replace("Expect_", "") for c in expect_cols],
+    "Guests"   : counts,
+    "Expect %" : (counts / len(df) * 100).round(1),
+    "Met %"    : np.where(counts == 0, 0, (met_counts / counts * 100).round(1))
+}).sort_values("Guests", ascending=False)
 
 # ────────────────────────────────────────────────────────────────
 with tab1:
