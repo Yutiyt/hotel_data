@@ -86,23 +86,31 @@ tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
 )
 
 # -------------- extra summary: most‑selected expectations ---------------
-TOP_N = 5   # change to 10 if you want a longer list
-
-# 1) build a Series: index = feature name, value = # guests who expected it
+# counts of guests who expected each feature
 expect_cols = [c for c in df.columns if c.startswith("Expect_")]
-counts = df[expect_cols].sum().sort_values(ascending=False)
+counts = df[expect_cols].sum()
 
-# 2) keep top N and convert to readable table
-top = (counts.head(TOP_N)
-              .rename(lambda s: s.replace("Expect_", ""))           # clean label
-              .to_frame("Guests"))
-top["Percent"] = (top["Guests"] / len(df) * 100).round(1).astype(str) + "%"
+# counts of guests whose expectation for that feature was met
+met_cols = [c for c in df.columns if c.startswith("Met_")]
+met_counts = df[met_cols].sum()
 
+# tidy table
+summary = (
+    pd.concat([counts, met_counts], axis=1, keys=["Guests", "MetGuests"])
+      .rename_axis("Feature")          # move feature name out of the index
+      .reset_index()
+)
+
+summary["Expect %"] = (summary["Guests"] / len(df) * 100).round(1)
+summary["Met %"]    = (summary["MetGuests"] / summary["Guests"] * 100).round(1)
+
+# order by popularity
+summary = summary.sort_values("Guests", ascending=False)
 
 
 # ────────────────────────────────────────────────────────────────
 with tab1:
-    st.subheader("Tidy preview & KPIs")
+    st.subheader("Expected features & how well we delivered")
 
     # full, scrollable table
     st.dataframe(df, use_container_width=True, height=500)
@@ -110,9 +118,17 @@ with tab1:
     # KPIs
     st.metric("Guests", len(df))
     st.metric("Avg Satisfaction", f"{df['Satisfaction_Score'].mean():.2f}")
-    st.subheader(f"Top {TOP_N} expected features")
-    st.table(top)
-    st.bar_chart(top["Guests"])
+    st.dataframe(
+    summary.assign(
+        # turn the % columns into tidy strings for display
+        **{
+            "Expect %": summary["Expect %"].astype(str) + "%",
+            "Met %":    summary["Met %"].astype(str)    + "%"
+        }
+    ),
+    use_container_width=True
+)
+
 
 # ────────────────────────────────────────────────────────────────
 with tab2:
