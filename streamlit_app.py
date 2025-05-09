@@ -86,27 +86,22 @@ tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
 )
 
 # -------------- extra summary: most‑selected expectations ---------------
-# counts of guests who expected each feature
 expect_cols = [c for c in df.columns if c.startswith("Expect_")]
-counts = df[expect_cols].sum()
+met_cols    = [f"Met_{c.split('_', 1)[1]}" for c in expect_cols]
 
-# counts of guests whose expectation for that feature was met
-met_cols = [c for c in df.columns if c.startswith("Met_")]
-met_counts = df[met_cols].sum()
+counts      = df[expect_cols].sum()
+met_counts  = df[met_cols].sum()
 
-# tidy table
 summary = (
-    pd.concat([counts, met_counts], axis=1, keys=["Guests", "MetGuests"])
-      .rename_axis("Feature")          # move feature name out of the index
-      .reset_index()
+    pd.DataFrame({
+        "Feature"  : [c.replace("Expect_", "") for c in expect_cols],
+        "Guests"   : counts.values.astype(int),
+        "Expect %" : (counts / len(df) * 100).round(1),
+        "Met %"    : (met_counts / counts.replace(0, np.nan) * 100).round(1)
+    })
+    .fillna(0)                      # turn NaN -> 0 for Met %
+    .sort_values("Guests", ascending=False)
 )
-
-summary["Expect %"] = (summary["Guests"] / len(df) * 100).round(1)
-summary["Met %"]    = (summary["MetGuests"] / summary["Guests"] * 100).round(1)
-
-# order by popularity
-summary = summary.sort_values("Guests", ascending=False)
-
 
 # ────────────────────────────────────────────────────────────────
 with tab1:
@@ -118,16 +113,16 @@ with tab1:
     # KPIs
     st.metric("Guests", len(df))
     st.metric("Avg Satisfaction", f"{df['Satisfaction_Score'].mean():.2f}")
-    st.dataframe(
-    summary.assign(
-        # turn the % columns into tidy strings for display
-        **{
-            "Expect %": summary["Expect %"].astype(str) + "%",
-            "Met %":    summary["Met %"].astype(str)    + "%"
-        }
-    ),
-    use_container_width=True
-)
+    st.subheader("Expectation vs Fulfilment (all features)")
+    st.table(
+        summary.assign(
+            **{
+                "Expect %" : summary["Expect %"].astype(str) + "%",
+                "Met %"    : summary["Met %"].astype(str)    + "%"
+            }
+        )
+    )
+
 
 
 # ────────────────────────────────────────────────────────────────
