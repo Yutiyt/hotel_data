@@ -85,12 +85,34 @@ tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
      "🧭 4‑Area Map", "🔗 Corr‑Network", "🏷 Two‑Group Density"]
 )
 
+# -------------- extra summary: most‑selected expectations ---------------
+TOP_N = 5   # change to 10 if you want a longer list
+
+# 1) build a Series: index = feature name, value = # guests who expected it
+expect_cols = [c for c in df.columns if c.startswith("Expect_")]
+counts = df[expect_cols].sum().sort_values(ascending=False)
+
+# 2) keep top N and convert to readable table
+top = (counts.head(TOP_N)
+              .rename(lambda s: s.replace("Expect_", ""))           # clean label
+              .to_frame("Guests"))
+top["Percent"] = (top["Guests"] / len(df) * 100).round(1).astype(str) + "%"
+
+
+
 # ────────────────────────────────────────────────────────────────
 with tab1:
     st.subheader("Tidy preview & KPIs")
-    st.write(df.head())
+
+    # full, scrollable table
+    st.dataframe(df, use_container_width=True, height=500)
+
+    # KPIs
     st.metric("Guests", len(df))
     st.metric("Avg Satisfaction", f"{df['Satisfaction_Score'].mean():.2f}")
+    st.subheader(f"Top {TOP_N} expected features")
+    st.table(top)
+    st.bar_chart(top["Guests"])
 
 # ────────────────────────────────────────────────────────────────
 with tab2:
