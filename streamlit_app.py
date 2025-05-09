@@ -114,14 +114,15 @@ with tab1:
     st.metric("Guests", len(df))
     st.metric("Avg Satisfaction", f"{df['Satisfaction_Score'].mean():.2f}")
     st.subheader("Expectation vs Fulfilment (all features)")
-    st.table(
-        summary.assign(
-            **{
-                "Expect %" : summary["Expect %"].astype(str) + "%",
-                "Met %"    : summary["Met %"].astype(str)    + "%"
-            }
-        )
+st.table(
+    summary.assign(
+        **{
+            "Expect %" : summary["Expect %"].astype(str) + "%",
+            "Met %"    : summary["Met %"].astype(str)    + "%"
+        }
     )
+)
+
 
 
 
