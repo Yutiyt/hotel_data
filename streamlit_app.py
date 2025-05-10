@@ -219,7 +219,7 @@ with tab5:
     st.subheader("Correlation‑network")
 
     mode   = st.selectbox("Mode", ["Expect", "Satisfy"])
-    thresh = st.slider("|r| cut‑off", 0.10, 0.50, 0.25, 0.01, step=0.01)
+    thresh = st.slider("|r| cut‑off", 0.10, 0.50, 0.25, 0.01)
 
     # -------- build correlation graph ---------------------------------
     cols  = [c for c in df.columns if c.startswith(f"{mode}_")]
