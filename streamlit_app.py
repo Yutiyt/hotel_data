@@ -266,7 +266,7 @@ with tab5:
     nx.draw_networkx_labels(
         G, pos,
         labels=wrapped_labels,
-        font_size=8,                 # smaller font
+        font_size=4,                 # smaller font
         font_weight="normal",
         ax=ax
     )
