@@ -219,9 +219,10 @@ with tab5:
     st.subheader("Correlation‑network")
 
     mode   = st.selectbox("Mode", ["Expect", "Satisfy"])
-    thresh = st.slider("|r| cut‑off", 0.10, 0.50, 0.25, 0.01)
+    thresh = st.slider("|r| cut‑off", min_value=0.10, max_value=0.50,
+                       value=0.25, step=0.01)
 
-    # -------- build correlation graph ---------------------------------
+    # ---------- build graph ------------------------------------------
     cols  = [c for c in df.columns if c.startswith(f"{mode}_")]
     names = [c.replace(f"{mode}_", "") for c in cols]
     corr  = df[cols].astype(int).corr().values
@@ -237,42 +238,46 @@ with tab5:
         st.info("No edges above threshold.")
         st.stop()
 
-    # -------- nice layout & aesthetics --------------------------------
-    pos = nx.spring_layout(G, seed=33)
+    # ---------- nice layout & aesthetics -----------------------------
+    pos = nx.spring_layout(G, seed=33, k=0.5)
 
-    # wrap labels at first " & " or long space
-    def wrap(text, width=18):
-        return "\n".join([text[i:i + width] for i in range(0, len(text), width)])
+    def wrap_words(text, width=16):
+        """Wrap on spaces without breaking words."""
+        words, line, lines = text.split(), "", []
+        for w in words:
+            if len(line) + len(w) + 1 > width:
+                lines.append(line.rstrip())
+                line = ""
+            line += w + " "
+        lines.append(line.rstrip())
+        return "\n".join(lines)
 
-    wrapped_labels = {n: wrap(n) for n in G.nodes()}
+    labels = {n: wrap_words(n) for n in G.nodes()}
 
     fig, ax = plt.subplots(figsize=(6, 5))
 
-    nx.draw_networkx_nodes(
-        G, pos,
-        node_size=900,                # smaller nodes
-        node_color="lightgray",
-        edgecolors="k",
-        ax=ax
-    )
-    nx.draw_networkx_edges(
-        G, pos,
-        width=[abs(G[u][v]['weight']) * 3 for u, v in G.edges()],  # thinner
-        edge_color=['tab:orange' if G[u][v]['weight'] > 0 else 'tab:blue'
-                    for u, v in G.edges()],
-        alpha=0.8,
-        ax=ax
-    )
-    nx.draw_networkx_labels(
-        G, pos,
-        labels=wrapped_labels,
-        font_size=4,                 # smaller font
-        font_weight="normal",
-        ax=ax
-    )
+    nx.draw_networkx_nodes(G, pos,
+                           node_size=700,
+                           node_color="lightgray",
+                           edgecolors="k",
+                           ax=ax)
+
+    nx.draw_networkx_edges(G, pos,
+                           width=[abs(G[u][v]['weight'])*2.5 for u, v in G.edges()],
+                           edge_color=['tab:orange' if G[u][v]['weight'] > 0 else 'tab:blue'
+                                       for u, v in G.edges()],
+                           alpha=0.8,
+                           ax=ax)
+
+    nx.draw_networkx_labels(G, pos,
+                            labels=labels,
+                            font_size=6,
+                            font_weight="normal",
+                            ax=ax)
 
     ax.set_axis_off()
     st.pyplot(fig)
+
 
 
 # ────────────────────────────────────────────────────────────────
