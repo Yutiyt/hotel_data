@@ -217,31 +217,63 @@ with tab4:
 # ────────────────────────────────────────────────────────────────
 with tab5:
     st.subheader("Correlation‑network")
-    mode = st.selectbox("Mode", ["Expect", "Satisfy"])
-    thresh = st.slider("|r| cut‑off", 0.10, 0.50, 0.25, 0.01)
 
-    cols = [c for c in df.columns if c.startswith(f"{mode}_")]
-    names= [c.replace(f"{mode}_","") for c in cols]
-    corr = df[cols].astype(int).corr().values
+    mode   = st.selectbox("Mode", ["Expect", "Satisfy"])
+    thresh = st.slider("|r| cut‑off", 0.10, 0.50, 0.25, 0.01, step=0.01)
+
+    # -------- build correlation graph ---------------------------------
+    cols  = [c for c in df.columns if c.startswith(f"{mode}_")]
+    names = [c.replace(f"{mode}_", "") for c in cols]
+    corr  = df[cols].astype(int).corr().values
+
     G = nx.Graph()
-    for i,a in enumerate(names):
-        for j in range(i+1,len(names)):
-            w = corr[i,j]
-            if abs(w)>=thresh:
-                G.add_edge(a,names[j],weight=w)
-    if len(G)==0:
+    for i, a in enumerate(names):
+        for j in range(i + 1, len(names)):
+            w = corr[i, j]
+            if abs(w) >= thresh:
+                G.add_edge(a, names[j], weight=w)
+
+    if len(G) == 0:
         st.info("No edges above threshold.")
-    else:
-        pos = nx.spring_layout(G, seed=33)
-        fig, ax = plt.subplots(figsize=(7,6))
-        nx.draw_networkx_nodes(G,pos,node_color="lightgray",edgecolors="k",node_size=1000,ax=ax)
-        nx.draw_networkx_edges(G,pos,
-            width=[abs(G[u][v]['weight'])*4 for u,v in G.edges()],
-            edge_color=['tab:orange' if G[u][v]['weight']>0 else 'tab:blue' for u,v in G.edges()],
-            ax=ax)
-        nx.draw_networkx_labels(G,pos,font_size=8,ax=ax)
-        ax.set_axis_off()
-        st.pyplot(fig)
+        st.stop()
+
+    # -------- nice layout & aesthetics --------------------------------
+    pos = nx.spring_layout(G, seed=33)
+
+    # wrap labels at first " & " or long space
+    def wrap(text, width=18):
+        return "\n".join([text[i:i + width] for i in range(0, len(text), width)])
+
+    wrapped_labels = {n: wrap(n) for n in G.nodes()}
+
+    fig, ax = plt.subplots(figsize=(6, 5))
+
+    nx.draw_networkx_nodes(
+        G, pos,
+        node_size=900,                # smaller nodes
+        node_color="lightgray",
+        edgecolors="k",
+        ax=ax
+    )
+    nx.draw_networkx_edges(
+        G, pos,
+        width=[abs(G[u][v]['weight']) * 3 for u, v in G.edges()],  # thinner
+        edge_color=['tab:orange' if G[u][v]['weight'] > 0 else 'tab:blue'
+                    for u, v in G.edges()],
+        alpha=0.8,
+        ax=ax
+    )
+    nx.draw_networkx_labels(
+        G, pos,
+        labels=wrapped_labels,
+        font_size=8,                 # smaller font
+        font_weight="normal",
+        ax=ax
+    )
+
+    ax.set_axis_off()
+    st.pyplot(fig)
+
 
 # ────────────────────────────────────────────────────────────────
 with tab6:
