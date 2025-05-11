@@ -154,20 +154,6 @@ with tab3:
 
 # ────────────────────────────────────────────────────────────────
 with tab4:
-  # -------------------------------- chart (unchanged) --------------------
-fig, ax = plt.subplots(figsize=(6, 6))
-# … existing scatter + quadrant code …
-st.pyplot(fig)
-
-# -------- NEW: show mapping in a tidy table ----------------------------
-area_tbl = (pd.Series(AREA_MAP)
-              .rename_axis("Area")
-              .explode()
-              .rename("Feature")
-              .reset_index())
-
-st.markdown("#### Feature catalogue by service area")
-st.table(area_tbl)
 
     st.subheader("Four‑quadrant expectation map")
 
@@ -213,6 +199,22 @@ st.table(area_tbl)
         df["Area_X"], df["Area_Y"] = xs, ys
         df["SatTier"] = np.where(df["Satisfaction_Score"]<0.7,
                                  "Low (<0.7)","High (≥0.7)")
+
+    # -------------------------------- chart (unchanged) --------------------
+fig, ax = plt.subplots(figsize=(6, 6))
+# … existing scatter + quadrant code …
+st.pyplot(fig)
+
+# -------- NEW: show mapping in a tidy table ----------------------------
+area_tbl = (pd.Series(AREA_MAP)
+              .rename_axis("Area")
+              .explode()
+              .rename("Feature")
+              .reset_index())
+
+st.markdown("#### Feature catalogue by service area")
+st.table(area_tbl)
+
 
     fig, ax = plt.subplots(figsize=(6,6))
     for tier,c in {"Low (<0.7)":"tab:blue","High (≥0.7)":"tab:orange"}.items():
