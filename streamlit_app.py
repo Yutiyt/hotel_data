@@ -200,22 +200,6 @@ with tab4:
         df["SatTier"] = np.where(df["Satisfaction_Score"]<0.7,
                                  "Low (<0.7)","High (≥0.7)")
 
-    # -------------------------------- chart (unchanged) --------------------
-fig, ax = plt.subplots(figsize=(6, 6))
-# … existing scatter + quadrant code …
-st.pyplot(fig)
-
-# -------- NEW: show mapping in a tidy table ----------------------------
-area_tbl = (pd.Series(AREA_MAP)
-              .rename_axis("Area")
-              .explode()
-              .rename("Feature")
-              .reset_index())
-
-st.markdown("#### Feature catalogue by service area")
-st.table(area_tbl)
-
-
     fig, ax = plt.subplots(figsize=(6,6))
     for tier,c in {"Low (<0.7)":"tab:blue","High (≥0.7)":"tab:orange"}.items():
         m = df["SatTier"]==tier
@@ -230,6 +214,21 @@ st.table(area_tbl)
     ax.set_xticks([]); ax.set_yticks([])
     ax.legend(); ax.set_title("Colour = Satisfaction tier")
     st.pyplot(fig)
+    # ------------------- existing scatter plot -------------------
+st.pyplot(fig)                    
+
+# ------------------- NEW: area‑feature table -----------------
+# Build a tidy dataframe: one row per (area, feature)
+area_tbl = (
+    pd.Series(AREA_MAP, name="Feature")      # dict → Series
+      .explode()                             # one feature per row
+      .rename_axis("Area")                   # index -> column
+      .reset_index()
+)
+
+st.markdown("#### Feature catalogue by service area")
+st.table(area_tbl)               # scroll‑free, fits nicely under the chart
+
 
 # ────────────────────────────────────────────────────────────────
 with tab5:
